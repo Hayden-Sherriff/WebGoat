@@ -54,9 +54,11 @@ public class UserServiceTest {
   public void testAddUser() {
     var username = "guest";
     var password = "guest";
+    when(mockPasswordEncoder.encode(password)).thenReturn("encodedPassword");
 
     sut.addUser(username, password);
 
+    verify(mockPasswordEncoder).encode(password);
     verify(mockUserRepository, times(1)).save(any(WebWolfUser.class));
   }
 }
