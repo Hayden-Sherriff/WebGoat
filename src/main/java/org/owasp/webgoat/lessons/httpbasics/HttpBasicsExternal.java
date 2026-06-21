@@ -27,6 +27,7 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestController
 @AssignmentHints({ "http-basics.hints.http_basics_external.1" })
 public class HttpBasicsExternal implements AssignmentEndpoint {
+    private static final String SESSION_KEY = "external_http_secret";
     private final LessonSession lessonSession;
     private final Random random;
 
@@ -38,10 +39,10 @@ public class HttpBasicsExternal implements AssignmentEndpoint {
     @PostMapping("/HttpBasics/externalcheck")
     @ResponseBody
     public AttackResult completed(@RequestParam String code) {
-        if (lessonSession.getValue("external_http_secret") == null) {
+        if (lessonSession.getValue(SESSION_KEY) == null) {
             return failed(this)
                     .feedback("You need to send the right request to /HttpBasics/external to get the secret!").build();
-        } else if (!code.isBlank() && lessonSession.getValue("external_http_secret").equals(code)) {
+        } else if (!code.isBlank() && lessonSession.getValue(SESSION_KEY).equals(code)) {
             return success(this).build();
         } else {
             return failed(this).build();
@@ -53,7 +54,7 @@ public class HttpBasicsExternal implements AssignmentEndpoint {
     public ResponseEntity<Map<String, String>> getSecretCode(@RequestBody Map<String, Object> body,
             HttpServletRequest request) {
         var secret = Integer.toHexString(random.nextInt());
-        lessonSession.setValue("external_http_secret", secret);
+        lessonSession.setValue(SESSION_KEY, secret);
         if (
                 request.getHeader("User-Agent") != null &&
                 request.getHeader("Content-Type") != null &&

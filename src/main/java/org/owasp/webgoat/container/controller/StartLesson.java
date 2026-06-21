@@ -30,10 +30,7 @@ public class StartLesson {
     course.getLessons().stream()
         .filter(l -> l.getId().equals(lessonName))
         .findFirst()
-        .ifPresent(
-            lesson -> {
-              request.setAttribute("lesson", lesson);
-            });
+        .ifPresent(lesson -> request.setAttribute("lesson", lesson));
 
     return model;
   }

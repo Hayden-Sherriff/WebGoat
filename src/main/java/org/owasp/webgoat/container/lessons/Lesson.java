@@ -65,8 +65,10 @@ public abstract class Lesson {
    *
    * @return a {@link java.lang.String} object.
    */
+  private static final String DEFAULT_PATH = "#lesson/";
+
   protected String getPath() {
-    return "#lesson/";
+    return DEFAULT_PATH;
   }
 
   /**

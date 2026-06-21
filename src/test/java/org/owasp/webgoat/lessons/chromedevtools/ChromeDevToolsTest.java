@@ -14,7 +14,7 @@ import org.owasp.webgoat.container.plugins.LessonTest;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-public class ChromeDevToolsTest extends LessonTest {
+class ChromeDevToolsTest extends LessonTest {
 
   @BeforeEach
   public void setup() {

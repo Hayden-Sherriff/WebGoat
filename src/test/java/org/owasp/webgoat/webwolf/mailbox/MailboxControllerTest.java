@@ -21,6 +21,7 @@ import java.time.format.DateTimeFormatter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.owasp.webgoat.webwolf.PasswordEncoderConfig;
 import org.owasp.webgoat.webwolf.WebSecurityConfig;
 import org.owasp.webgoat.webwolf.user.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +34,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(MailboxController.class)
-@Import(WebSecurityConfig.class)
+@Import({WebSecurityConfig.class, PasswordEncoderConfig.class})
 public class MailboxControllerTest {
 
   @Autowired private MockMvc mvc;

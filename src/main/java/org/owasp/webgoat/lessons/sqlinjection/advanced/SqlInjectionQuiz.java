@@ -7,7 +7,6 @@ package org.owasp.webgoat.lessons.sqlinjection.advanced;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.failed;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.success;
 
-import java.io.IOException;
 import org.owasp.webgoat.container.assignments.AssignmentEndpoint;
 import org.owasp.webgoat.container.assignments.AttackResult;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,8 +33,7 @@ public class SqlInjectionQuiz implements AssignmentEndpoint {
       @RequestParam String[] question_1_solution,
       @RequestParam String[] question_2_solution,
       @RequestParam String[] question_3_solution,
-      @RequestParam String[] question_4_solution)
-      throws IOException {
+      @RequestParam String[] question_4_solution) {
     int correctAnswers = 0;
 
     String[] givenAnswers = {

@@ -30,7 +30,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @ExtendWith(MockitoExtension.class)
 // TODO: Rewrite this as end-to-end test this mocks too many classes
-public class ReportCardControllerTest {
+class ReportCardControllerTest {
 
   private MockMvc mockMvc;
   @Mock private Course course;

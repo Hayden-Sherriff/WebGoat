@@ -41,7 +41,7 @@ import io.jsonwebtoken.impl.TextCodec;
 public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
   private final LessonDataSource dataSource;
 
-  private JWTHeaderKIDEndpoint(LessonDataSource dataSource) {
+  public JWTHeaderKIDEndpoint(LessonDataSource dataSource) {
     this.dataSource = dataSource;
   }
 

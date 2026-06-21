@@ -14,7 +14,7 @@ import org.owasp.webgoat.container.plugins.LessonTest;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @ExtendWith(MockitoExtension.class)
-public class HttpBasicsExternalTest extends LessonTest {
+class HttpBasicsExternalTest extends LessonTest {
 
   @Test
   void externalSuccess() throws Exception {

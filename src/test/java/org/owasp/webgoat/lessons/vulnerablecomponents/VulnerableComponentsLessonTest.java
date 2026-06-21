@@ -12,7 +12,7 @@ import com.thoughtworks.xstream.io.StreamException;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
-public class VulnerableComponentsLessonTest {
+class VulnerableComponentsLessonTest {
 
   String strangeContact =
       "<contact class='dynamic-proxy'>\n"

@@ -12,7 +12,6 @@ import lombok.AllArgsConstructor;
 import org.owasp.webgoat.container.assignments.AssignmentEndpoint;
 import org.owasp.webgoat.container.assignments.AssignmentHints;
 import org.owasp.webgoat.container.assignments.AttackResult;
-import org.owasp.webgoat.container.session.LessonSession;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -26,23 +25,10 @@ import org.springframework.web.bind.annotation.RestController;
 public class SampleAttack implements AssignmentEndpoint {
   private static final String secretValue = "secr37Value";
 
-  private final LessonSession userSessionData;
-
-  public SampleAttack(LessonSession userSessionData) {
-    this.userSessionData = userSessionData;
-  }
-
   @PostMapping("/lesson-template/sample-attack")
   @ResponseBody
   public AttackResult completed(
       @RequestParam("param1") String param1, @RequestParam("param2") String param2) {
-    if (userSessionData.getValue("some-value") != null) {
-      // do any session updating you want here ... or not, just comment/example here
-      // return failed().feedback("lesson-template.sample-attack.failure-2").build());
-    }
-
-    // overly simple example for success. See other existing lesssons for ways to detect 'success'
-    // or 'failure'
     if (secretValue.equals(param1)) {
       return success(this)
           .output("Custom Output ...if you want, for success")

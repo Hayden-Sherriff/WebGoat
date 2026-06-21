@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.owasp.webgoat.container.plugins.LessonTest;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-public class SqlInjectionLesson5aTest extends LessonTest {
+class SqlInjectionLesson5aTest extends LessonTest {
 
   @Test
   public void knownAccountShouldDisplayData() throws Exception {

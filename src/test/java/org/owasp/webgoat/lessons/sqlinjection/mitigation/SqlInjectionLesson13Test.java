@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.owasp.webgoat.container.plugins.LessonTest;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-public class SqlInjectionLesson13Test extends LessonTest {
+class SqlInjectionLesson13Test extends LessonTest {
 
   @Test
   public void knownAccountShouldDisplayData() throws Exception {

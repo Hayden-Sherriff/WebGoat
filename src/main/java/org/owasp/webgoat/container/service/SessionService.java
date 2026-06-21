@@ -22,11 +22,6 @@ public class SessionService {
   @RequestMapping(path = "/service/enable-security.mvc", produces = "application/json")
   @ResponseBody
   public String applySecurity(@CurrentUser WebGoatUser user) {
-    // webSession.toggleSecurity();
-    // restartLessonService.restartLesson(user);
-
-    // TODO disabled for now
-    // var msg = webSession.isSecurityEnabled() ? "security.enabled" : "security.disabled";
     return messages.getMessage("Not working...");
   }
 }

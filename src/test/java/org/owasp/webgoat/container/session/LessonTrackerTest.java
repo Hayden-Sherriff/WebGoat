@@ -56,6 +56,6 @@ class LessonTrackerTest {
     lessonTracker.assignmentSolved("a1");
     lessonTracker.assignmentSolved("a1");
 
-    assertThat(lessonTracker.getLessonOverview().size()).isEqualTo(1);
+    assertThat(lessonTracker.getLessonOverview()).hasSize(1);
   }
 }

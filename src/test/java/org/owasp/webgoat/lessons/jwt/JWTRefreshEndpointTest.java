@@ -24,7 +24,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @WithWebGoatUser
-public class JWTRefreshEndpointTest extends LessonTest {
+class JWTRefreshEndpointTest extends LessonTest {
 
   @BeforeEach
   void setup() {

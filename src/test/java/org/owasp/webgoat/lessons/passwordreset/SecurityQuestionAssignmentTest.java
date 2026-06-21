@@ -16,7 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
-public class SecurityQuestionAssignmentTest extends LessonTest {
+class SecurityQuestionAssignmentTest extends LessonTest {
 
   private MockMvc mockMvc;
 

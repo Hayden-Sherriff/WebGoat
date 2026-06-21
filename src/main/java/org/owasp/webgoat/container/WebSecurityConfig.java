@@ -16,7 +16,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /** Security configuration for WebGoat. */
@@ -27,8 +27,10 @@ public class WebSecurityConfig {
 
   private final UserService userDetailsService;
 
+  private static final String LOGIN_PAGE = "/login";
+
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain filterChain(HttpSecurity http) {
     return http.authorizeHttpRequests(
             auth ->
                 auth.requestMatchers(
@@ -47,7 +49,7 @@ public class WebSecurityConfig {
         .formLogin(
             login ->
                 login
-                    .loginPage("/login")
+                    .loginPage(LOGIN_PAGE)
                     .defaultSuccessUrl("/welcome.mvc", true)
                     .usernameParameter("username")
                     .passwordParameter("password")
@@ -55,20 +57,20 @@ public class WebSecurityConfig {
         .oauth2Login(
             oidc -> {
               oidc.defaultSuccessUrl("/login-oauth.mvc");
-              oidc.loginPage("/login");
+              oidc.loginPage(LOGIN_PAGE);
             })
         .logout(logout -> logout.deleteCookies("JSESSIONID").invalidateHttpSession(true))
         .csrf(csrf -> csrf.disable())
         .headers(headers -> headers.disable())
         .exceptionHandling(
             handling ->
-                handling.authenticationEntryPoint(new AjaxAuthenticationEntryPoint("/login")))
+                handling.authenticationEntryPoint(new AjaxAuthenticationEntryPoint(LOGIN_PAGE)))
         .build();
   }
 
   @Autowired
-  public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-    auth.userDetailsService(userDetailsService);
+  public void configureGlobal(AuthenticationManagerBuilder auth, PasswordEncoder passwordEncoder) {
+    auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
   }
 
   @Bean
@@ -79,12 +81,8 @@ public class WebSecurityConfig {
 
   @Bean
   public AuthenticationManager authenticationManager(
-      AuthenticationConfiguration authenticationConfiguration) throws Exception {
+      AuthenticationConfiguration authenticationConfiguration) {
     return authenticationConfiguration.getAuthenticationManager();
   }
 
-  @Bean
-  public NoOpPasswordEncoder passwordEncoder() {
-    return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
-  }
 }
