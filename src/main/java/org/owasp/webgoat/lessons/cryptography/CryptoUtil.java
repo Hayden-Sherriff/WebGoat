@@ -41,7 +41,6 @@ public class CryptoUtil {
         new RSAKeyGenParameterSpec(
             2048, FERMAT_PRIMES[new SecureRandom().nextInt(FERMAT_PRIMES.length)]);
     keyPairGenerator.initialize(kpgSpec);
-    // keyPairGenerator.initialize(2048);
     return keyPairGenerator.generateKeyPair();
   }
 

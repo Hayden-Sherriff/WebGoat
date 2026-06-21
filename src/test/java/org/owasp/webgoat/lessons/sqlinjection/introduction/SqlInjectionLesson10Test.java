@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.owasp.webgoat.container.plugins.LessonTest;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-public class SqlInjectionLesson10Test extends LessonTest {
+class SqlInjectionLesson10Test extends LessonTest {
 
   private String completedError = "JSON path \"lessonCompleted\"";
 

@@ -15,7 +15,7 @@ import org.owasp.webgoat.container.plugins.LessonTest;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 @ExtendWith(MockitoExtension.class)
-public class HttpBasicsQuizTest extends LessonTest {
+class HttpBasicsQuizTest extends LessonTest {
 
     @Test
   void quizSuccess() throws Exception {

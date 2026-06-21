@@ -17,11 +17,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 public class UserServiceTest {
 
   @Mock private UserRepository mockUserRepository;
+  @Mock private PasswordEncoder mockPasswordEncoder;
 
   @InjectMocks private UserService sut;
 
@@ -52,9 +54,11 @@ public class UserServiceTest {
   public void testAddUser() {
     var username = "guest";
     var password = "guest";
+    when(mockPasswordEncoder.encode(password)).thenReturn("encodedPassword");
 
     sut.addUser(username, password);
 
+    verify(mockPasswordEncoder).encode(password);
     verify(mockUserRepository, times(1)).save(any(WebWolfUser.class));
   }
 }

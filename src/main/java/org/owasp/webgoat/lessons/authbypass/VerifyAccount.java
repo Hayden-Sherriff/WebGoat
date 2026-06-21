@@ -7,9 +7,7 @@ package org.owasp.webgoat.lessons.authbypass;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.failed;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.success;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -44,7 +42,7 @@ public class VerifyAccount implements AssignmentEndpoint {
   @ResponseBody
   public AttackResult completed(
       @RequestParam String userId, @RequestParam String verifyMethod, HttpServletRequest req)
-      throws ServletException, IOException {
+      {
     AccountVerificationHelper verificationHelper = new AccountVerificationHelper();
     Map<String, String> submittedAnswers = parseSecQuestions(req);
     if (verificationHelper.didUserLikelylCheat((HashMap) submittedAnswers)) {
@@ -67,7 +65,6 @@ public class VerifyAccount implements AssignmentEndpoint {
     Map<String, String> userAnswers = new HashMap<>();
     List<String> paramNames = Collections.list(req.getParameterNames());
     for (String paramName : paramNames) {
-      // String paramName = req.getParameterNames().nextElement();
       if (paramName.contains("secQuestion")) {
         userAnswers.put(paramName, req.getParameter(paramName));
       }

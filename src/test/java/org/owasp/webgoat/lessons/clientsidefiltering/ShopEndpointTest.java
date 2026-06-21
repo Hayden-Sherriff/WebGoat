@@ -16,7 +16,7 @@ import org.owasp.webgoat.container.plugins.LessonTest;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-public class ShopEndpointTest extends LessonTest {
+class ShopEndpointTest extends LessonTest {
 
   private MockMvc mockMvc;
 

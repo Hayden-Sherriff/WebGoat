@@ -12,6 +12,7 @@ import static org.owasp.webgoat.container.assignments.AttackResultBuilder.succes
 import java.sql.*;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import lombok.extern.slf4j.Slf4j;
 import org.owasp.webgoat.container.LessonDataSource;
 import org.owasp.webgoat.container.assignments.AssignmentEndpoint;
 import org.owasp.webgoat.container.assignments.AssignmentHints;
@@ -21,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+@Slf4j
 @RestController
 @AssignmentHints(
     value = {
@@ -141,7 +143,7 @@ public class SqlInjectionLesson8 implements AssignmentEndpoint {
       Statement statement = connection.createStatement(TYPE_SCROLL_SENSITIVE, CONCUR_UPDATABLE);
       statement.executeUpdate(logQuery);
     } catch (SQLException e) {
-      System.err.println(e.getMessage());
+      log.error(e.getMessage());
     }
   }
 }

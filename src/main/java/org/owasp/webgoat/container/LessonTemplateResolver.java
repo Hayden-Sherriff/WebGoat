@@ -50,7 +50,7 @@ public class LessonTemplateResolver extends FileTemplateResolver {
       resource = loadAndCache(templateName);
     }
 
-    if (resource == null) {
+    if (resource.length == 0) {
       return new StringTemplateResource("Unable to find lesson HTML: %s".formatted(templateName));
     }
     return new StringTemplateResource(new String(resource, StandardCharsets.UTF_8));
@@ -66,7 +66,7 @@ public class LessonTemplateResolver extends FileTemplateResolver {
       log.error(
           "Unable to find lesson HTML: '{}', does the name of HTML file name match the lesson class name?",
           templateName);
-      return null;
+      return new byte[0];
     }
   }
 }

@@ -28,7 +28,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 @WithWebGoatUser
-public class JWTVotesEndpointTest extends LessonTest {
+class JWTVotesEndpointTest extends LessonTest {
 
   @BeforeEach
   public void setup() {

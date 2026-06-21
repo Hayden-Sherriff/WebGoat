@@ -17,7 +17,7 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
 /** Security configuration for WebWolf. */
@@ -28,8 +28,10 @@ public class WebSecurityConfig {
 
   private final UserService userDetailsService;
 
+  private static final String LOGIN_PAGE = "/login";
+
   @Bean
-  public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+  public SecurityFilterChain filterChain(HttpSecurity http) {
     return http.authorizeHttpRequests(
             auth -> {
               auth.requestMatchers("/css/**", "/webjars/**", "/favicon.ico", "/js/**", "/images/**")
@@ -48,7 +50,7 @@ public class WebSecurityConfig {
         .formLogin(
             login ->
                 login
-                    .loginPage("/login")
+                    .loginPage(LOGIN_PAGE)
                     .failureUrl("/login?error=true")
                     .defaultSuccessUrl("/home", true)
                     .usernameParameter("username")
@@ -61,13 +63,13 @@ public class WebSecurityConfig {
         .logout(logout -> logout.deleteCookies("WEBWOLFSESSION").invalidateHttpSession(true))
         .exceptionHandling(
             handling ->
-                handling.authenticationEntryPoint(new AjaxAuthenticationEntryPoint("/login")))
+                handling.authenticationEntryPoint(new AjaxAuthenticationEntryPoint(LOGIN_PAGE)))
         .build();
   }
 
   @Autowired
-  public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-    auth.userDetailsService(userDetailsService);
+  public void configureGlobal(AuthenticationManagerBuilder auth, PasswordEncoder passwordEncoder) {
+    auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder);
   }
 
   @Bean
@@ -77,12 +79,8 @@ public class WebSecurityConfig {
 
   @Bean
   public AuthenticationManager authenticationManager(
-      AuthenticationConfiguration authenticationConfiguration) throws Exception {
+      AuthenticationConfiguration authenticationConfiguration) {
     return authenticationConfiguration.getAuthenticationManager();
   }
 
-  @Bean
-  public NoOpPasswordEncoder passwordEncoder() {
-    return (NoOpPasswordEncoder) NoOpPasswordEncoder.getInstance();
-  }
 }

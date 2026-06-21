@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * MD5 hash generator. More information about this class is available from <a target="_top" href=
@@ -27,6 +28,7 @@ import java.io.UnsupportedEncodingException;
  * @author Stephen Ostermiller http://ostermiller.org/contact.pl?regarding=Java+Utilities
  * @since ostermillerutils 1.00.00
  */
+@Slf4j
 public class MD5 {
 
   /**
@@ -46,13 +48,13 @@ public class MD5 {
    */
   public static void main(String[] args) {
     if (args.length == 0) {
-      System.err.println("Please specify a file.");
+      log.error("Please specify a file.");
     } else {
       for (String element : args) {
         try {
-          System.out.println(MD5.getHashString(new File(element)) + " " + element);
+          log.info("{} {}", MD5.getHashString(new File(element)), element);
         } catch (IOException x) {
-          System.err.println(x.getMessage());
+          log.error(x.getMessage());
         }
       }
     }
@@ -574,7 +576,6 @@ public class MD5 {
     a += ((b & c) | (~b & d));
     a += x;
     a += ac;
-    // return rotateLeft(a, s) + b;
     a = (a << s) | (a >>> (32 - s));
     return a + b;
   }
@@ -583,7 +584,6 @@ public class MD5 {
     a += ((b & d) | (c & ~d));
     a += x;
     a += ac;
-    // return rotateLeft(a, s) + b;
     a = (a << s) | (a >>> (32 - s));
     return a + b;
   }
@@ -592,7 +592,6 @@ public class MD5 {
     a += (b ^ c ^ d);
     a += x;
     a += ac;
-    // return rotateLeft(a, s) + b;
     a = (a << s) | (a >>> (32 - s));
     return a + b;
   }
@@ -601,7 +600,6 @@ public class MD5 {
     a += (c ^ (b | ~d));
     a += x;
     a += ac;
-    // return rotateLeft(a, s) + b;
     a = (a << s) | (a >>> (32 - s));
     return a + b;
   }

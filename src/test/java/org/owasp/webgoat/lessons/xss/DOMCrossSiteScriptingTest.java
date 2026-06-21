@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.owasp.webgoat.container.plugins.LessonTest;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-public class DOMCrossSiteScriptingTest extends LessonTest {
+class DOMCrossSiteScriptingTest extends LessonTest {
 
   @Test
   void success() throws Exception {

@@ -7,7 +7,6 @@ package org.owasp.webgoat.lessons.sqlinjection.introduction;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.failed;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.success;
 
-import java.io.IOException;
 import java.sql.*;
 import org.owasp.webgoat.container.LessonDataSource;
 import org.owasp.webgoat.container.assignments.AssignmentEndpoint;
@@ -36,8 +35,7 @@ public class SqlInjectionLesson5b implements AssignmentEndpoint {
 
   @PostMapping("/SqlInjection/assignment5b")
   @ResponseBody
-  public AttackResult completed(@RequestParam String userid, @RequestParam String login_count)
-      throws IOException {
+  public AttackResult completed(@RequestParam String userid, @RequestParam String login_count) {
     return injectableQuery(login_count, userid);
   }
 
@@ -63,8 +61,6 @@ public class SqlInjectionLesson5b implements AssignmentEndpoint {
       }
 
       query.setInt(1, count);
-      // String query = "SELECT * FROM user_data WHERE Login_Count = " + login_count + " and userid
-      // = " + accountName, ;
       try {
         ResultSet results = query.executeQuery();
 

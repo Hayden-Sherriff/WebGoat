@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.owasp.webgoat.container.plugins.LessonTest;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-public class SqlInjectionLesson8Test extends LessonTest {
+class SqlInjectionLesson8Test extends LessonTest {
 
   @Test
   public void oneAccount() throws Exception {

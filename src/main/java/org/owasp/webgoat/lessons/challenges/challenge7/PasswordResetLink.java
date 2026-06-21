@@ -5,10 +5,12 @@
 package org.owasp.webgoat.lessons.challenges.challenge7;
 
 import java.util.Random;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * WARNING: DO NOT CHANGE FILE WITHOUT CHANGING .git contents
  */
+@Slf4j
 public class PasswordResetLink {
 
   public String createPasswordReset(String username, String key) {
@@ -33,14 +35,12 @@ public class PasswordResetLink {
 
   public static void main(String[] args) {
     if (args == null || args.length != 2) {
-      System.out.println("Need a username and key");
+      log.info("Need a username and key");
       System.exit(1);
     }
     String username = args[0];
     String key = args[1];
-    System.out.println("Generation password reset link for " + username);
-    System.out.println(
-        "Created password reset link: "
-            + new PasswordResetLink().createPasswordReset(username, key));
+    log.info("Generation password reset link for {}", username);
+    log.info("Created password reset link: {}", new PasswordResetLink().createPasswordReset(username, key));
   }
 }

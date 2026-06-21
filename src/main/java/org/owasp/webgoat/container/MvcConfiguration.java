@@ -188,7 +188,7 @@ public class MvcConfiguration implements WebMvcConfigurer {
   public PluginMessages pluginMessages(
       Messages messages, Language language, ResourcePatternResolver resourcePatternResolver) {
     PluginMessages pluginMessages = new PluginMessages(messages, language, resourcePatternResolver);
-    pluginMessages.setDefaultEncoding("UTF-8");
+    pluginMessages.setDefaultEncoding(UTF8);
     pluginMessages.setBasenames("i18n/WebGoatLabels");
     pluginMessages.setFallbackToSystemLocale(false);
     return pluginMessages;
@@ -201,8 +201,7 @@ public class MvcConfiguration implements WebMvcConfigurer {
 
   @Bean
   public LocaleResolver localeResolver() {
-    SessionLocaleResolver localeResolver = new SessionLocaleResolver();
-    return localeResolver;
+    return new SessionLocaleResolver();
   }
 
   @Bean
@@ -221,7 +220,7 @@ public class MvcConfiguration implements WebMvcConfigurer {
   @Bean
   public Messages messageSource(Language language) {
     Messages messages = new Messages(language);
-    messages.setDefaultEncoding("UTF-8");
+    messages.setDefaultEncoding(UTF8);
     messages.setBasename("classpath:i18n/messages");
     messages.setFallbackToSystemLocale(false);
     return messages;
