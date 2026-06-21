@@ -1,3 +1,9 @@
+function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.appendChild(document.createTextNode(str));
+    return div.innerHTML;
+}
+
 $(document).ready(function () {
     $("#postComment").on("click", function () {
         var commentInput = $("#commentInput").val();
@@ -30,17 +36,11 @@ $(document).ready(function () {
 
     getChallenges();
 
-    function escapeHtml(str) {
-        var div = document.createElement('div');
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
-    }
-
     function getChallenges() {
         $("#list").empty();
         $.get('CrossSiteScriptingStored/stored-xss', function (result, status) {
             for (var i = 0; i < result.length; i++) {
-                var comment = html.replace('USER', escapeHtml(result[i].user));
+                let comment = html.replace('USER', escapeHtml(result[i].user));
                 comment = comment.replace('DATETIME', escapeHtml(result[i].dateTime));
                 comment = comment.replace('COMMENT', escapeHtml(result[i].text));
                 $("#list").append(comment);
