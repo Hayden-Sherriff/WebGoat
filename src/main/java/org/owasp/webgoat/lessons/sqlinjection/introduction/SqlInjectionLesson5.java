@@ -12,6 +12,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.regex.Pattern;
 import org.owasp.webgoat.container.LessonDataSource;
 import org.owasp.webgoat.container.assignments.AssignmentEndpoint;
 import org.owasp.webgoat.container.assignments.AssignmentHints;
@@ -29,6 +30,11 @@ import org.springframework.web.bind.annotation.RestController;
       "SqlStringInjectionHint5-4"
     })
 public class SqlInjectionLesson5 implements AssignmentEndpoint {
+
+  private static final Pattern DCL_PATTERN =
+      Pattern.compile(
+          "\\s*(?:GRANT|REVOKE)\\s+\\w+\\s+ON\\s+\\w+\\s+(?:TO|FROM)\\s+\\w+\\s*",
+          Pattern.CASE_INSENSITIVE);
 
   private final LessonDataSource dataSource;
 
@@ -58,6 +64,12 @@ public class SqlInjectionLesson5 implements AssignmentEndpoint {
   }
 
   protected AttackResult injectableQuery(String query) {
+    if (query == null || !DCL_PATTERN.matcher(query).matches()) {
+      return failed(this)
+          .output(
+              "Not a valid GRANT/REVOKE statement. Your query was: " + query)
+          .build();
+    }
     try (Connection connection = dataSource.getConnection()) {
       try (Statement statement =
           connection.createStatement(
