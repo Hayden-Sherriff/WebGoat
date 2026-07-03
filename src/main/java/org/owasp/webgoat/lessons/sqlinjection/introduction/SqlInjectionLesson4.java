@@ -13,6 +13,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.regex.Pattern;
 import org.owasp.webgoat.container.LessonDataSource;
 import org.owasp.webgoat.container.assignments.AssignmentEndpoint;
 import org.owasp.webgoat.container.assignments.AssignmentHints;
@@ -27,6 +28,11 @@ import org.springframework.web.bind.annotation.RestController;
     value = {"SqlStringInjectionHint4-1", "SqlStringInjectionHint4-2", "SqlStringInjectionHint4-3"})
 public class SqlInjectionLesson4 implements AssignmentEndpoint {
 
+  private static final Pattern ALLOWED_QUERY_PATTERN =
+      Pattern.compile(
+          "\\s*ALTER\\s+TABLE\\s+employees\\s+ADD\\s+\\w+\\s+\\w+(\\(\\d+\\))?\\s*;?\\s*",
+          Pattern.CASE_INSENSITIVE);
+
   private final LessonDataSource dataSource;
 
   public SqlInjectionLesson4(LessonDataSource dataSource) {
@@ -40,6 +46,11 @@ public class SqlInjectionLesson4 implements AssignmentEndpoint {
   }
 
   protected AttackResult injectableQuery(String query) {
+    if (!ALLOWED_QUERY_PATTERN.matcher(query).matches()) {
+      return failed(this)
+          .output("Not a valid ALTER TABLE statement for the employees table.")
+          .build();
+    }
     try (Connection connection = dataSource.getConnection()) {
       try (Statement statement =
           connection.createStatement(TYPE_SCROLL_INSENSITIVE, CONCUR_READ_ONLY)) {
