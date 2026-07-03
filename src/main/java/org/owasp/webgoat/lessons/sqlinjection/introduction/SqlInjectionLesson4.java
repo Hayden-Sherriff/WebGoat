@@ -30,7 +30,7 @@ public class SqlInjectionLesson4 implements AssignmentEndpoint {
 
   private static final Pattern ALLOWED_QUERY_PATTERN =
       Pattern.compile(
-          "\\s*ALTER\\s+TABLE\\s+employees\\s+ADD\\s+\\w+\\s+\\w+(\\(\\d+\\))?\\s*;?\\s*",
+          "\\s*+ALTER\\s++TABLE\\s++employees\\s++ADD\\s++(COLUMN\\s++)?+\\w++\\s++\\w++(\\(\\d++\\))?+\\s*+;?\\s*+",
           Pattern.CASE_INSENSITIVE);
 
   private final LessonDataSource dataSource;
