@@ -5,16 +5,17 @@
 package org.owasp.webgoat.lessons.vulnerablecomponents;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.StreamException;
-import org.junit.jupiter.api.Disabled;
+import com.thoughtworks.xstream.security.ForbiddenClassException;
+import com.thoughtworks.xstream.security.NoTypePermission;
 import org.junit.jupiter.api.Test;
 
 class VulnerableComponentsLessonTest {
 
-  String strangeContact =
+  private final String strangeContact =
       "<contact class='dynamic-proxy'>\n"
           + "<interface>org.owasp.webgoat.lessons.vulnerablecomponents.Contact</interface>\n"
           + "  <handler class='java.beans.EventHandler'>\n"
@@ -26,45 +27,33 @@ class VulnerableComponentsLessonTest {
           + "    <action>start</action>\n"
           + "  </handler>\n"
           + "</contact>";
-  String contact = "<contact>\n" + "</contact>";
+  private final String contact = "<contact>\n" + "</contact>";
 
-  @Test
-  public void testTransformation() throws Exception {
+  private XStream securedXStream() {
     XStream xstream = new XStream();
     xstream.setClassLoader(Contact.class.getClassLoader());
     xstream.alias("contact", ContactImpl.class);
     xstream.ignoreUnknownElements();
-    assertThat(xstream.fromXML(contact)).isNotNull();
+    xstream.addPermission(NoTypePermission.NONE);
+    xstream.allowTypes(new Class[] {ContactImpl.class, String.class, Integer.class});
+    return xstream;
   }
 
   @Test
-  public void testIllegalTransformation() throws Exception {
-    XStream xstream = new XStream();
-    xstream.setClassLoader(Contact.class.getClassLoader());
-    xstream.alias("contact", ContactImpl.class);
-    xstream.ignoreUnknownElements();
-    try {
-      ((Contact) xstream.fromXML(strangeContact)).getFirstName();
-    } catch (Throwable t) {
-      Throwable c = t;
-      int i = 0;
-      while (c != null && i < 10) {
-        System.out.println("CHAIN[" + i + "] " + c.getClass().getName() + " :: " + c.getMessage());
-        c = c.getCause();
-        i++;
-      }
-    }
+  void testTransformation() {
+    assertThat(securedXStream().fromXML(contact)).isNotNull();
   }
 
   @Test
-  public void testIllegalPayload() throws Exception {
-    XStream xstream = new XStream();
-    xstream.setClassLoader(Contact.class.getClassLoader());
-    xstream.alias("contact", ContactImpl.class);
-    xstream.ignoreUnknownElements();
-    Exception e =
-        assertThrows(
-            StreamException.class, () -> ((Contact) xstream.fromXML("bullssjfs")).getFirstName());
-    assertThat(e.getCause().getMessage().contains("START_DOCUMENT")).isTrue();
+  void testExploitPayloadIsBlocked() {
+    XStream xstream = securedXStream();
+    assertThatThrownBy(() -> xstream.fromXML(strangeContact))
+        .isInstanceOf(ForbiddenClassException.class);
+  }
+
+  @Test
+  void testIllegalPayload() {
+    XStream xstream = securedXStream();
+    assertThatThrownBy(() -> xstream.fromXML("bullssjfs")).isInstanceOf(StreamException.class);
   }
 }

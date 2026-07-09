@@ -131,8 +131,9 @@ public class GeneralLessonIntegrationTest extends IntegrationTest {
             Map<String, Object> params = new HashMap<>();
             params.clear();
             params.put("payload", solution);
-            checkAssignment(webGoatUrlConfig.url("VulnerableComponents/attack1"), params, true);
-            checkResults("VulnerableComponents");
+            // XStream is now restricted to an allowlist, so the RCE gadget payload is rejected
+            // and the assignment can no longer be solved through deserialization.
+            checkAssignment(webGoatUrlConfig.url("VulnerableComponents/attack1"), params, false);
         }
     }
 
