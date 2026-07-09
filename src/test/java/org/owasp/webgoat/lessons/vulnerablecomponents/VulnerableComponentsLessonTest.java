@@ -34,6 +34,8 @@ class VulnerableComponentsLessonTest {
     xstream.setClassLoader(Contact.class.getClassLoader());
     xstream.alias("contact", ContactImpl.class);
     xstream.ignoreUnknownElements();
+    XStream.setupDefaultSecurity(xstream);
+    xstream.allowTypes(new Class[] {ContactImpl.class});
     assertThat(xstream.fromXML(contact)).isNotNull();
   }
 
@@ -43,6 +45,8 @@ class VulnerableComponentsLessonTest {
     xstream.setClassLoader(Contact.class.getClassLoader());
     xstream.alias("contact", ContactImpl.class);
     xstream.ignoreUnknownElements();
+    XStream.setupDefaultSecurity(xstream);
+    xstream.allowTypes(new Class[] {ContactImpl.class});
     try {
       ((Contact) xstream.fromXML(strangeContact)).getFirstName();
     } catch (Throwable t) {
@@ -62,6 +66,8 @@ class VulnerableComponentsLessonTest {
     xstream.setClassLoader(Contact.class.getClassLoader());
     xstream.alias("contact", ContactImpl.class);
     xstream.ignoreUnknownElements();
+    XStream.setupDefaultSecurity(xstream);
+    xstream.allowTypes(new Class[] {ContactImpl.class});
     Exception e =
         assertThrows(
             StreamException.class, () -> ((Contact) xstream.fromXML("bullssjfs")).getFirstName());
