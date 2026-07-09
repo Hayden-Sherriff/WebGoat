@@ -35,5 +35,4 @@ If you are still struggling with SQL and need more information or practice, you 
 
 === It is your turn!
 Look at the example table.
-Try to retrieve the department of the employee Bob Franco.
-Note that you have been granted full administrator privileges in this assignment and can access all data without authentication.
+Enter the last name of the employee Bob Franco to retrieve his department.
