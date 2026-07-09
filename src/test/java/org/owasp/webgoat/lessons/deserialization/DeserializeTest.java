@@ -19,27 +19,16 @@ class DeserializeTest extends LessonTest {
   private static String OS = System.getProperty("os.name").toLowerCase();
 
   @Test
-  void success() throws Exception {
-    if (OS.indexOf("win") > -1) {
-      mockMvc
-          .perform(
-              MockMvcRequestBuilders.post("/InsecureDeserialization/task")
-                  .param(
-                      "token",
-                      SerializationHelper.toString(
-                          new VulnerableTaskHolder("wait", "ping localhost -n 5"))))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.lessonCompleted", is(true)));
-    } else {
-      mockMvc
-          .perform(
-              MockMvcRequestBuilders.post("/InsecureDeserialization/task")
-                  .param(
-                      "token",
-                      SerializationHelper.toString(new VulnerableTaskHolder("wait", "sleep 5"))))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.lessonCompleted", is(true)));
-    }
+  void commandExecutionIsNoLongerTriggered() throws Exception {
+    // VulnerableTaskHolder.readObject no longer runs OS commands, so deserializing a
+    // "sleep"/"ping" payload does not produce the timed side effect the exploit relied on.
+    String action = OS.indexOf("win") > -1 ? "ping localhost -n 5" : "sleep 5";
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.post("/InsecureDeserialization/task")
+                .param("token", SerializationHelper.toString(new VulnerableTaskHolder("wait", action))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.lessonCompleted", is(false)));
   }
 
   @Test
