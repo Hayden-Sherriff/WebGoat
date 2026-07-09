@@ -16,30 +16,18 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 class DeserializeTest extends LessonTest {
 
-  private static String OS = System.getProperty("os.name").toLowerCase();
-
   @Test
   void success() throws Exception {
-    if (OS.indexOf("win") > -1) {
-      mockMvc
-          .perform(
-              MockMvcRequestBuilders.post("/InsecureDeserialization/task")
-                  .param(
-                      "token",
-                      SerializationHelper.toString(
-                          new VulnerableTaskHolder("wait", "ping localhost -n 5"))))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.lessonCompleted", is(true)));
-    } else {
-      mockMvc
-          .perform(
-              MockMvcRequestBuilders.post("/InsecureDeserialization/task")
-                  .param(
-                      "token",
-                      SerializationHelper.toString(new VulnerableTaskHolder("wait", "sleep 5"))))
-          .andExpect(status().isOk())
-          .andExpect(jsonPath("$.lessonCompleted", is(true)));
-    }
+    // A crafted "sleep"/"ping" payload still completes the lesson; the command is validated
+    // but no longer executed, so this passes without any OS command running server-side.
+    mockMvc
+        .perform(
+            MockMvcRequestBuilders.post("/InsecureDeserialization/task")
+                .param(
+                    "token",
+                    SerializationHelper.toString(new VulnerableTaskHolder("wait", "sleep 5"))))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.lessonCompleted", is(true)));
   }
 
   @Test
