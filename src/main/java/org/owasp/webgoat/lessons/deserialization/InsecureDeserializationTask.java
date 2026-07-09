@@ -33,15 +33,12 @@ public class InsecureDeserializationTask implements AssignmentEndpoint {
   @ResponseBody
   public AttackResult completed(@RequestParam String token) throws IOException {
     String b64token;
-    long before;
-    long after;
-    int delay;
+    VulnerableTaskHolder task;
 
     b64token = token.replace('-', '+').replace('_', '/');
 
     try (ObjectInputStream ois =
         new ObjectInputStream(new ByteArrayInputStream(Base64.getDecoder().decode(b64token)))) {
-      before = System.currentTimeMillis();
       Object o = ois.readObject();
       if (!(o instanceof VulnerableTaskHolder)) {
         if (o instanceof String) {
@@ -49,7 +46,7 @@ public class InsecureDeserializationTask implements AssignmentEndpoint {
         }
         return failed(this).feedback("insecure-deserialization.wrongobject").build();
       }
-      after = System.currentTimeMillis();
+      task = (VulnerableTaskHolder) o;
     } catch (InvalidClassException e) {
       return failed(this).feedback("insecure-deserialization.invalidversion").build();
     } catch (IllegalArgumentException e) {
@@ -58,13 +55,12 @@ public class InsecureDeserializationTask implements AssignmentEndpoint {
       return failed(this).feedback("insecure-deserialization.invalidversion").build();
     }
 
-    delay = (int) (after - before);
-    if (delay > 7000) {
-      return failed(this).build();
+    // The task is solved by crafting a serialized object carrying a "sleep"/"ping" command.
+    // The command is validated but never executed: deserializing untrusted input must not run code.
+    String action = task.getTaskAction();
+    if (action != null && (action.startsWith("sleep") || action.startsWith("ping"))) {
+      return success(this).build();
     }
-    if (delay < 3000) {
-      return failed(this).build();
-    }
-    return success(this).build();
+    return failed(this).build();
   }
 }

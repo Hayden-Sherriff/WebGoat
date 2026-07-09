@@ -26,6 +26,10 @@ public class VulnerableTaskHolder implements Serializable {
     this.requestedExecutionTime = LocalDateTime.now();
   }
 
+  public String getTaskAction() {
+    return taskAction;
+  }
+
   @Override
   public String toString() {
     return "VulnerableTaskHolder [taskName="

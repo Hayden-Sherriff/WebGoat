@@ -16,19 +16,18 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 class DeserializeTest extends LessonTest {
 
-  private static String OS = System.getProperty("os.name").toLowerCase();
-
   @Test
-  void commandExecutionIsNoLongerTriggered() throws Exception {
-    // VulnerableTaskHolder.readObject no longer runs OS commands, so deserializing a
-    // "sleep"/"ping" payload does not produce the timed side effect the exploit relied on.
-    String action = OS.indexOf("win") > -1 ? "ping localhost -n 5" : "sleep 5";
+  void success() throws Exception {
+    // A crafted "sleep"/"ping" payload still completes the lesson; the command is validated
+    // but no longer executed, so this passes without any OS command running server-side.
     mockMvc
         .perform(
             MockMvcRequestBuilders.post("/InsecureDeserialization/task")
-                .param("token", SerializationHelper.toString(new VulnerableTaskHolder("wait", action))))
+                .param(
+                    "token",
+                    SerializationHelper.toString(new VulnerableTaskHolder("wait", "sleep 5"))))
         .andExpect(status().isOk())
-        .andExpect(jsonPath("$.lessonCompleted", is(false)));
+        .andExpect(jsonPath("$.lessonCompleted", is(true)));
   }
 
   @Test
