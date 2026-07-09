@@ -8,6 +8,7 @@ import static org.owasp.webgoat.container.assignments.AttackResultBuilder.failed
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.success;
 
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.security.NoTypePermission;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.webgoat.container.assignments.AssignmentEndpoint;
 import org.owasp.webgoat.container.assignments.AssignmentHints;
@@ -27,8 +28,8 @@ public class VulnerableComponentsLesson implements AssignmentEndpoint {
     xstream.setClassLoader(Contact.class.getClassLoader());
     xstream.alias("contact", ContactImpl.class);
     xstream.ignoreUnknownElements();
-    XStream.setupDefaultSecurity(xstream);
-    xstream.allowTypes(new Class[] {ContactImpl.class});
+    xstream.addPermission(NoTypePermission.NONE);
+    xstream.allowTypes(new Class[] {ContactImpl.class, String.class, Integer.class});
     Contact contact = null;
 
     try {
