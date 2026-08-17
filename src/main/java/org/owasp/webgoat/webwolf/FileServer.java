@@ -72,10 +72,10 @@ public class FileServer {
   public ModelAndView importFile(
       @RequestParam("file") MultipartFile multipartFile, Authentication authentication)
       throws IOException {
+    var fileName = sanitizeFileName(multipartFile.getOriginalFilename());
     var username = authentication.getName();
     var destinationDir = new File(fileLocation, username);
     destinationDir.mkdirs();
-    var fileName = sanitizeFileName(multipartFile.getOriginalFilename());
     var destinationDirPath = destinationDir.toPath().toAbsolutePath().normalize();
     var destinationFile = destinationDirPath.resolve(fileName).normalize();
     // defense in depth, the sanitized name is already a single path element
