@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -48,19 +50,23 @@ public class ProfileUploadBase implements AssignmentEndpoint {
     File uploadDirectory = cleanupAndCreateDirectoryForUser(username);
 
     try {
-      var uploadedFile = new File(uploadDirectory, fullName);
+      var uploadDirectoryPath = uploadDirectory.getCanonicalFile().toPath();
+      var requestedPath = uploadDirectoryPath.resolve(fullName).normalize();
+
+      if (!requestedPath.startsWith(uploadDirectoryPath)) {
+        return traversalAttempt(requestedPath);
+      }
+
+      var uploadedFile = requestedPath.toFile();
       uploadedFile.createNewFile();
       FileCopyUtils.copy(file.getBytes(), uploadedFile);
 
-      if (attemptWasMade(uploadDirectory, uploadedFile)) {
-        return solvedIt(uploadedFile);
-      }
       return informationMessage(this)
           .feedback("path-traversal-profile-updated")
           .feedbackArgs(uploadedFile.getAbsoluteFile())
           .build();
 
-    } catch (IOException e) {
+    } catch (IOException | InvalidPathException e) {
       return failed(this).output(e.getMessage()).build();
     }
   }
@@ -75,21 +81,19 @@ public class ProfileUploadBase implements AssignmentEndpoint {
     return uploadDirectory;
   }
 
-  private boolean attemptWasMade(File expectedUploadDirectory, File uploadedFile)
-      throws IOException {
-    return !expectedUploadDirectory
-        .getCanonicalPath()
-        .equals(uploadedFile.getParentFile().getCanonicalPath());
-  }
-
-  private AttackResult solvedIt(File uploadedFile) throws IOException {
-    if (uploadedFile.getCanonicalFile().getParentFile().getName().endsWith("PathTraversal")) {
+  /**
+   * Scores an upload which tried to escape the user's upload directory. The file is never written,
+   * only the location the attacker aimed for is evaluated.
+   */
+  private AttackResult traversalAttempt(Path requestedPath) {
+    var parent = requestedPath.getParent();
+    if (parent != null && parent.getFileName().toString().endsWith("PathTraversal")) {
       return success(this).build();
     }
     return failed(this)
         .attemptWasMade()
         .feedback("path-traversal-profile-attempt")
-        .feedbackArgs(uploadedFile.getCanonicalPath())
+        .feedbackArgs(requestedPath.toString())
         .build();
   }
 
