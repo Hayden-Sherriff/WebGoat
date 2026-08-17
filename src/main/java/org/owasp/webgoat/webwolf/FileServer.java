@@ -79,7 +79,7 @@ public class FileServer {
     var destinationFile = destinationDirPath.resolve(fileName).normalize();
     // defense in depth, the sanitized name is already a single path element
     if (!destinationFile.startsWith(destinationDirPath)) {
-      throw new IllegalArgumentException("Invalid file name");
+      throw new InvalidFileNameException();
     }
     // DO NOT use multipartFile.transferTo(), see
     // https://stackoverflow.com/questions/60336929/java-nio-file-nosuchfileexception-when-file-transferto-is-called
@@ -96,27 +96,29 @@ public class FileServer {
 
   private static String sanitizeFileName(String originalFileName) {
     if (originalFileName == null || originalFileName.isBlank()) {
-      throw new IllegalArgumentException("Invalid file name");
+      throw new InvalidFileNameException();
     }
     // a multipart filename is fully attacker controlled, only keep the base name
     var normalized = originalFileName.replace('\\', '/');
     Path fileName = Paths.get(normalized).getFileName();
     if (fileName == null) {
-      throw new IllegalArgumentException("Invalid file name");
+      throw new InvalidFileNameException();
     }
     var name = fileName.toString();
     if (name.isBlank() || ".".equals(name) || "..".equals(name)) {
-      throw new IllegalArgumentException("Invalid file name");
+      throw new InvalidFileNameException();
     }
     return name;
   }
 
-  @ExceptionHandler(IllegalArgumentException.class)
+  @ExceptionHandler(InvalidFileNameException.class)
   @ResponseStatus(HttpStatus.BAD_REQUEST)
   @ResponseBody
-  public String handleInvalidFileName(IllegalArgumentException e) {
-    return e.getMessage();
+  public String handleInvalidFileName() {
+    return "Invalid file name";
   }
+
+  private static class InvalidFileNameException extends RuntimeException {}
 
   @GetMapping(value = "/files")
   public ModelAndView getFiles(

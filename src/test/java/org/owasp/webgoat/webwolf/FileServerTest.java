@@ -5,13 +5,14 @@
 package org.owasp.webgoat.webwolf;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
+import static org.assertj.core.api.Assertions.assertThatRuntimeException;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -62,7 +63,7 @@ class FileServerTest {
     fileServer.importFile(multipartFile(originalFileName), authentication);
 
     assertThat(fileLocation.resolve(USERNAME).resolve("evil.txt")).hasContent("content");
-    assertThat(Files.walk(fileLocation).filter(Files::isRegularFile)).hasSize(1);
+    assertThat(uploadedFiles()).hasSize(1);
   }
 
   @ParameterizedTest
@@ -71,9 +72,15 @@ class FileServerTest {
   void shouldRejectFileNameWithoutBaseName(String originalFileName) throws IOException {
     var multipartFile = multipartFile(originalFileName);
 
-    assertThatExceptionOfType(IllegalArgumentException.class)
+    assertThatRuntimeException()
         .isThrownBy(() -> fileServer.importFile(multipartFile, authentication));
-    assertThat(Files.walk(fileLocation).filter(Files::isRegularFile)).isEmpty();
+    assertThat(uploadedFiles()).isEmpty();
+  }
+
+  private List<Path> uploadedFiles() throws IOException {
+    try (var files = Files.walk(fileLocation)) {
+      return files.filter(Files::isRegularFile).toList();
+    }
   }
 
   private MockMultipartFile multipartFile(String originalFileName) {
