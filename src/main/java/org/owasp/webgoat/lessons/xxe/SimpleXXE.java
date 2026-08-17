@@ -10,7 +10,6 @@ import static org.springframework.http.MediaType.ALL_VALUE;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 import org.apache.commons.exec.OS;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.owasp.webgoat.container.CurrentUser;
 import org.owasp.webgoat.container.assignments.AssignmentEndpoint;
 import org.owasp.webgoat.container.assignments.AssignmentHints;
@@ -39,6 +38,8 @@ public class SimpleXXE implements AssignmentEndpoint {
     "Windows", "Program Files (x86)", "Program Files", "pagefile.sys"
   };
 
+  private static final String PARSE_ERROR = "Unable to parse the comment, please check the XML.";
+
   private final CommentsCache comments;
 
   public SimpleXXE(CommentsCache comments) {
@@ -51,13 +52,13 @@ public class SimpleXXE implements AssignmentEndpoint {
       @RequestBody String commentStr, @CurrentUser WebGoatUser user) {
     String error = "";
     try {
-      var comment = comments.parseXml(commentStr, false);
+      var comment = comments.parseXml(commentStr, true);
       comments.addComment(comment, user, false);
       if (checkSolution(comment)) {
         return success(this).build();
       }
     } catch (Exception e) {
-      error = ExceptionUtils.getStackTrace(e);
+      error = PARSE_ERROR;
     }
     return failed(this).output(error).build();
   }
