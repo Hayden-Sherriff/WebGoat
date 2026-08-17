@@ -12,6 +12,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -69,18 +71,40 @@ public class FileServer {
     var username = authentication.getName();
     var destinationDir = new File(fileLocation, username);
     destinationDir.mkdirs();
+    var fileName = sanitizeFileName(multipartFile.getOriginalFilename());
+    var destinationDirPath = destinationDir.toPath().toAbsolutePath().normalize();
+    var destinationFile = destinationDirPath.resolve(fileName).normalize();
+    if (!destinationFile.startsWith(destinationDirPath)) {
+      throw new IllegalArgumentException("Invalid file name");
+    }
     // DO NOT use multipartFile.transferTo(), see
     // https://stackoverflow.com/questions/60336929/java-nio-file-nosuchfileexception-when-file-transferto-is-called
     try (InputStream is = multipartFile.getInputStream()) {
-      var destinationFile = destinationDir.toPath().resolve(multipartFile.getOriginalFilename());
       Files.deleteIfExists(destinationFile);
       Files.copy(is, destinationFile);
     }
-    log.debug("File saved to {}", new File(destinationDir, multipartFile.getOriginalFilename()));
+    log.debug("File saved to {}", destinationFile);
 
     return new ModelAndView(
         new RedirectView("files", true),
         new ModelMap().addAttribute("uploadSuccess", "File uploaded successful"));
+  }
+
+  private static String sanitizeFileName(String originalFileName) {
+    if (originalFileName == null || originalFileName.isBlank()) {
+      throw new IllegalArgumentException("Invalid file name");
+    }
+    // a multipart filename is fully attacker controlled, only keep the base name
+    var normalized = originalFileName.replace('\\', '/');
+    Path fileName = Paths.get(normalized).getFileName();
+    if (fileName == null) {
+      throw new IllegalArgumentException("Invalid file name");
+    }
+    var name = fileName.toString();
+    if (name.isBlank() || ".".equals(name) || "..".equals(name)) {
+      throw new IllegalArgumentException("Invalid file name");
+    }
+    return name;
   }
 
   @GetMapping(value = "/files")
