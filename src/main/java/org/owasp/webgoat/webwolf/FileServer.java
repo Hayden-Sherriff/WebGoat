@@ -22,15 +22,18 @@ import java.util.TimeZone;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
@@ -74,6 +77,7 @@ public class FileServer {
     var fileName = sanitizeFileName(multipartFile.getOriginalFilename());
     var destinationDirPath = destinationDir.toPath().toAbsolutePath().normalize();
     var destinationFile = destinationDirPath.resolve(fileName).normalize();
+    // defense in depth, the sanitized name is already a single path element
     if (!destinationFile.startsWith(destinationDirPath)) {
       throw new IllegalArgumentException("Invalid file name");
     }
@@ -105,6 +109,13 @@ public class FileServer {
       throw new IllegalArgumentException("Invalid file name");
     }
     return name;
+  }
+
+  @ExceptionHandler(IllegalArgumentException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ResponseBody
+  public String handleInvalidFileName(IllegalArgumentException e) {
+    return e.getMessage();
   }
 
   @GetMapping(value = "/files")
