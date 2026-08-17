@@ -24,8 +24,8 @@ class SimpleXXETest extends LessonTest {
   }
 
   @Test
-  void workingAttack() throws Exception {
-    // Call with XXE injection
+  void xxeAttackIsBlocked() throws Exception {
+    // Call with XXE injection, the external entity should not be resolved
     mockMvc
         .perform(
             MockMvcRequestBuilders.post("/xxe/simple")
@@ -34,7 +34,7 @@ class SimpleXXETest extends LessonTest {
                         + " SYSTEM \"file:///\"> ]><comment><text>&root;</text></comment>"))
         .andExpect(status().isOk())
         .andExpect(
-            jsonPath("$.feedback", CoreMatchers.is(messages.getMessage("assignment.solved"))));
+            jsonPath("$.feedback", CoreMatchers.is(messages.getMessage("assignment.not.solved"))));
   }
 
   @Test
@@ -62,12 +62,14 @@ class SimpleXXETest extends LessonTest {
   }
 
   @Test
-  void postingPlainTextShouldThrowException() throws Exception {
+  void postingPlainTextShouldNotLeakStackTrace() throws Exception {
     mockMvc
         .perform(MockMvcRequestBuilders.post("/xxe/simple").content("test"))
         .andExpect(status().isOk())
         .andExpect(
-            jsonPath("$.output", CoreMatchers.startsWith("jakarta.xml.bind.UnmarshalException")))
+            jsonPath(
+                "$.output",
+                CoreMatchers.is("Unable to parse the comment, please check the XML.")))
         .andExpect(
             jsonPath("$.feedback", CoreMatchers.is(messages.getMessage("assignment.not.solved"))));
   }
