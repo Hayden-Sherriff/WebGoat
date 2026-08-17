@@ -67,7 +67,7 @@ class FileServerTest {
   }
 
   @ParameterizedTest
-  @ValueSource(strings = {"", " ", ".", "..", "../..", "/", "..\\"})
+  @ValueSource(strings = {"", " ", ".", "..", "../..", "/", "..\\", "evil\0.txt"})
   @DisplayName("A file name without a usable base name is rejected")
   void shouldRejectFileNameWithoutBaseName(String originalFileName) throws IOException {
     var multipartFile = multipartFile(originalFileName);

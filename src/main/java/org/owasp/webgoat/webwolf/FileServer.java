@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
@@ -100,7 +101,12 @@ public class FileServer {
     }
     // a multipart filename is fully attacker controlled, only keep the base name
     var normalized = originalFileName.replace('\\', '/');
-    Path fileName = Paths.get(normalized).getFileName();
+    Path fileName;
+    try {
+      fileName = Paths.get(normalized).getFileName();
+    } catch (InvalidPathException e) {
+      throw new InvalidFileNameException();
+    }
     if (fileName == null) {
       throw new InvalidFileNameException();
     }
