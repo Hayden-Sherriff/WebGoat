@@ -12,6 +12,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -20,15 +23,18 @@ import java.util.TimeZone;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
+import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.view.RedirectView;
@@ -66,22 +72,59 @@ public class FileServer {
   public ModelAndView importFile(
       @RequestParam("file") MultipartFile multipartFile, Authentication authentication)
       throws IOException {
+    var fileName = sanitizeFileName(multipartFile.getOriginalFilename());
     var username = authentication.getName();
     var destinationDir = new File(fileLocation, username);
     destinationDir.mkdirs();
+    var destinationDirPath = destinationDir.toPath().toAbsolutePath().normalize();
+    var destinationFile = destinationDirPath.resolve(fileName).normalize();
+    // defense in depth, the sanitized name is already a single path element
+    if (!destinationFile.startsWith(destinationDirPath)) {
+      throw new InvalidFileNameException();
+    }
     // DO NOT use multipartFile.transferTo(), see
     // https://stackoverflow.com/questions/60336929/java-nio-file-nosuchfileexception-when-file-transferto-is-called
     try (InputStream is = multipartFile.getInputStream()) {
-      var destinationFile = destinationDir.toPath().resolve(multipartFile.getOriginalFilename());
       Files.deleteIfExists(destinationFile);
       Files.copy(is, destinationFile);
     }
-    log.debug("File saved to {}", new File(destinationDir, multipartFile.getOriginalFilename()));
+    log.debug("File saved to {}", destinationFile);
 
     return new ModelAndView(
         new RedirectView("files", true),
         new ModelMap().addAttribute("uploadSuccess", "File uploaded successful"));
   }
+
+  private static String sanitizeFileName(String originalFileName) {
+    if (originalFileName == null || originalFileName.isBlank()) {
+      throw new InvalidFileNameException();
+    }
+    // a multipart filename is fully attacker controlled, only keep the base name
+    var normalized = originalFileName.replace('\\', '/');
+    Path fileName;
+    try {
+      fileName = Paths.get(normalized).getFileName();
+    } catch (InvalidPathException e) {
+      throw new InvalidFileNameException();
+    }
+    if (fileName == null) {
+      throw new InvalidFileNameException();
+    }
+    var name = fileName.toString();
+    if (name.isBlank() || ".".equals(name) || "..".equals(name)) {
+      throw new InvalidFileNameException();
+    }
+    return name;
+  }
+
+  @ExceptionHandler(InvalidFileNameException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ResponseBody
+  public String handleInvalidFileName() {
+    return "Invalid file name";
+  }
+
+  private static class InvalidFileNameException extends RuntimeException {}
 
   @GetMapping(value = "/files")
   public ModelAndView getFiles(
