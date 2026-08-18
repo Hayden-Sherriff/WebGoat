@@ -7,9 +7,9 @@ package org.owasp.webgoat.lessons.jwt.claimmisuse;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.failed;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.success;
 
+import java.security.SecureRandom;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
@@ -28,7 +28,6 @@ import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SigningKeyResolverAdapter;
 import io.jsonwebtoken.impl.TextCodec;
 
@@ -42,13 +41,18 @@ import io.jsonwebtoken.impl.TextCodec;
   "jwt-kid-hint6"
 })
 public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
-  private static final Set<String> ALLOWED_ALGORITHMS =
-      Set.of(
-          SignatureAlgorithm.HS256.getValue(),
-          SignatureAlgorithm.HS384.getValue(),
-          SignatureAlgorithm.HS512.getValue());
   private static final Pattern KID_PATTERN = Pattern.compile("[A-Za-z0-9_-]{1,64}");
   private static final String KID_QUERY = "SELECT key FROM jwt_keys WHERE id = ?";
+
+  /**
+   * Random key used when the key id cannot be resolved, so that verification fails instead of the
+   * parser rejecting a null key with an IllegalArgumentException.
+   */
+  private static final byte[] UNRESOLVABLE_KEY = new byte[64];
+
+  static {
+    new SecureRandom().nextBytes(UNRESOLVABLE_KEY);
+  }
 
   private final LessonDataSource dataSource;
 
@@ -71,21 +75,15 @@ public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
       return failed(this).feedback("jwt-invalid-token").build();
     } else {
       try {
-        final String[] errorMessage = {null};
         Jwt jwt =
             Jwts.parser()
                 .setSigningKeyResolver(
                     new SigningKeyResolverAdapter() {
                       @Override
                       public byte[] resolveSigningKeyBytes(JwsHeader header, Claims claims) {
-                        if (!ALLOWED_ALGORITHMS.contains(header.getAlgorithm())) {
-                          errorMessage[0] = "Unsupported signature algorithm";
-                          return null;
-                        }
                         final String kid = (String) header.get("kid");
                         if (kid == null || !KID_PATTERN.matcher(kid).matches()) {
-                          errorMessage[0] = "Invalid key id";
-                          return null;
+                          return UNRESOLVABLE_KEY;
                         }
                         try (var connection = dataSource.getConnection();
                             var statement = connection.prepareStatement(KID_QUERY)) {
@@ -96,15 +94,12 @@ public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
                             }
                           }
                         } catch (SQLException e) {
-                          errorMessage[0] = e.getMessage();
+                          throw new IllegalStateException("Unable to resolve signing key", e);
                         }
-                        return null;
+                        return UNRESOLVABLE_KEY;
                       }
                     })
                 .parseClaimsJws(token);
-        if (errorMessage[0] != null) {
-          return failed(this).output(errorMessage[0]).build();
-        }
         Claims claims = (Claims) jwt.getBody();
         String username = (String) claims.get("username");
         if ("Jerry".equals(username)) {
