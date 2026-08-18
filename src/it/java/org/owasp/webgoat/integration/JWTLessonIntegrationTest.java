@@ -26,6 +26,7 @@ import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
@@ -80,7 +81,7 @@ public class JWTLessonIntegrationTest extends IntegrationTest {
     MatcherAssert.assertThat(
         overview.getList(
             "findAll { it.assignment.name == 'JWTHeaderJKUEndpoint' }.solved", Boolean.class),
-        CoreMatchers.everyItem(CoreMatchers.is(false)));
+        CoreMatchers.is(List.of(false)));
   }
 
   private String generateToken(String key) {
