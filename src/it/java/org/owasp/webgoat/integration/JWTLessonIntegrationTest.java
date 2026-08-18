@@ -50,11 +50,37 @@ public class JWTLessonIntegrationTest extends IntegrationTest {
 
     deleteTomThroughKidClaim();
 
-    deleteTomThroughJkuClaim();
+    deleteTomThroughJkuClaimIsBlocked();
 
     quiz();
 
-    checkResults("JWT");
+    checkResultsExceptJkuAssignment();
+  }
+
+  /**
+   * The jku assignment can no longer be solved: the endpoint only fetches a JWKS from a
+   * preconfigured trusted location, so a WebWolf hosted key set is rejected.
+   */
+  private void checkResultsExceptJkuAssignment() {
+    var overview =
+        RestAssured.given()
+            .when()
+            .relaxedHTTPSValidation()
+            .cookie("JSESSIONID", getWebGoatCookie())
+            .get(webGoatUrlConfig.url("service/lessonoverview.mvc/JWT.lesson"))
+            .then()
+            .statusCode(200)
+            .extract()
+            .jsonPath();
+
+    MatcherAssert.assertThat(
+        overview.getList(
+            "findAll { it.assignment.name != 'JWTHeaderJKUEndpoint' }.solved", Boolean.class),
+        CoreMatchers.everyItem(CoreMatchers.is(true)));
+    MatcherAssert.assertThat(
+        overview.getList(
+            "findAll { it.assignment.name == 'JWTHeaderJKUEndpoint' }.solved", Boolean.class),
+        CoreMatchers.everyItem(CoreMatchers.is(false)));
   }
 
   private String generateToken(String key) {
@@ -248,7 +274,7 @@ public class JWTLessonIntegrationTest extends IntegrationTest {
         CoreMatchers.is(true));
   }
 
-  private void deleteTomThroughJkuClaim() throws NoSuchAlgorithmException {
+  private void deleteTomThroughJkuClaimIsBlocked() throws NoSuchAlgorithmException {
     KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
     keyPairGenerator.initialize(2048);
     KeyPair keyPair = keyPairGenerator.generateKeyPair();
@@ -294,7 +320,7 @@ public class JWTLessonIntegrationTest extends IntegrationTest {
             .statusCode(200)
             .extract()
             .path("lessonCompleted"),
-        CoreMatchers.is(true));
+        CoreMatchers.is(false));
   }
 
   private void quiz() {

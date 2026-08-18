@@ -8,13 +8,17 @@ import static org.owasp.webgoat.container.assignments.AttackResultBuilder.failed
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.success;
 
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.security.interfaces.RSAPublicKey;
+import java.util.List;
+import java.util.Objects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.webgoat.container.assignments.AssignmentEndpoint;
 import org.owasp.webgoat.container.assignments.AssignmentHints;
 import org.owasp.webgoat.container.assignments.AttackResult;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -37,6 +41,19 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 })
 public class JWTHeaderJKUEndpoint implements AssignmentEndpoint {
 
+  private final List<URI> allowedJwksUrls;
+
+  public JWTHeaderJKUEndpoint(
+      @Value("${webgoat.jwt.jku.allowed-urls:}") List<String> allowedJwksUrls) {
+    this.allowedJwksUrls =
+        allowedJwksUrls.stream()
+            .map(String::trim)
+            .filter(StringUtils::isNotEmpty)
+            .map(JWTHeaderJKUEndpoint::toNormalizedUri)
+            .filter(Objects::nonNull)
+            .toList();
+  }
+
   @PostMapping("/JWT/jku/follow/{user}")
   public @ResponseBody String follow(@PathVariable("user") String user) {
     if ("Jerry".equals(user)) {
@@ -54,7 +71,14 @@ public class JWTHeaderJKUEndpoint implements AssignmentEndpoint {
       try {
         var decodedJWT = JWT.decode(token);
         var jku = decodedJWT.getHeaderClaim("jku");
-        var jwkProvider = new JwkProviderBuilder(new URL(jku.asString())).build();
+        var jwksUrl = resolveAllowedJwksUrl(jku.asString());
+        if (jwksUrl == null) {
+          return failed(this)
+              .feedback("jwt-invalid-token")
+              .output("The 'jku' header does not point to a trusted JWKS location")
+              .build();
+        }
+        var jwkProvider = new JwkProviderBuilder(jwksUrl.toURL()).build();
         var jwk = jwkProvider.get(decodedJWT.getKeyId());
         var algorithm = Algorithm.RSA256((RSAPublicKey) jwk.getPublicKey());
         JWT.require(algorithm).build().verify(decodedJWT);
@@ -71,6 +95,30 @@ public class JWTHeaderJKUEndpoint implements AssignmentEndpoint {
       } catch (MalformedURLException | JWTVerificationException | JwkException e) {
         return failed(this).feedback("jwt-invalid-token").output(e.toString()).build();
       }
+    }
+  }
+
+  /**
+   * Returns the configured JWKS location matching the given {@code jku} claim, or {@code null} when
+   * the claim does not exactly match one of the trusted locations. No outbound request is made for
+   * untrusted values.
+   */
+  private URI resolveAllowedJwksUrl(String jku) {
+    if (StringUtils.isEmpty(jku)) {
+      return null;
+    }
+    var requested = toNormalizedUri(jku);
+    if (requested == null) {
+      return null;
+    }
+    return allowedJwksUrls.stream().filter(requested::equals).findFirst().orElse(null);
+  }
+
+  private static URI toNormalizedUri(String url) {
+    try {
+      return new URI(url).normalize();
+    } catch (URISyntaxException e) {
+      return null;
     }
   }
 }
