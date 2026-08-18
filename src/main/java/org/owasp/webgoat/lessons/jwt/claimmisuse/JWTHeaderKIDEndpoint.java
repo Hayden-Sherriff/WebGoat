@@ -30,7 +30,9 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SigningKeyResolverAdapter;
 import io.jsonwebtoken.impl.TextCodec;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @AssignmentHints({
   "jwt-kid-hint1",
@@ -94,7 +96,7 @@ public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
                             }
                           }
                         } catch (SQLException e) {
-                          throw new IllegalStateException("Unable to resolve signing key", e);
+                          log.warn("Unable to resolve the signing key for kid {}", kid, e);
                         }
                         return UNRESOLVABLE_KEY;
                       }
