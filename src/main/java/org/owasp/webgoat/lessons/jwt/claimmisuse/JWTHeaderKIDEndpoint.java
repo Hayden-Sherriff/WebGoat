@@ -9,6 +9,8 @@ import static org.owasp.webgoat.container.assignments.AttackResultBuilder.succes
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.webgoat.container.LessonDataSource;
@@ -26,6 +28,7 @@ import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.SigningKeyResolverAdapter;
 import io.jsonwebtoken.impl.TextCodec;
 
@@ -39,6 +42,14 @@ import io.jsonwebtoken.impl.TextCodec;
   "jwt-kid-hint6"
 })
 public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
+  private static final Set<String> ALLOWED_ALGORITHMS =
+      Set.of(
+          SignatureAlgorithm.HS256.getValue(),
+          SignatureAlgorithm.HS384.getValue(),
+          SignatureAlgorithm.HS512.getValue());
+  private static final Pattern KID_PATTERN = Pattern.compile("[A-Za-z0-9_-]{1,64}");
+  private static final String KID_QUERY = "SELECT key FROM jwt_keys WHERE id = ?";
+
   private final LessonDataSource dataSource;
 
   public JWTHeaderKIDEndpoint(LessonDataSource dataSource) {
@@ -67,15 +78,22 @@ public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
                     new SigningKeyResolverAdapter() {
                       @Override
                       public byte[] resolveSigningKeyBytes(JwsHeader header, Claims claims) {
+                        if (!ALLOWED_ALGORITHMS.contains(header.getAlgorithm())) {
+                          errorMessage[0] = "Unsupported signature algorithm";
+                          return null;
+                        }
                         final String kid = (String) header.get("kid");
-                        try (var connection = dataSource.getConnection()) {
-                          ResultSet rs =
-                              connection
-                                  .createStatement()
-                                  .executeQuery(
-                                      "SELECT key FROM jwt_keys WHERE id = '" + kid + "'");
-                          while (rs.next()) {
-                            return TextCodec.BASE64.decode(rs.getString(1));
+                        if (kid == null || !KID_PATTERN.matcher(kid).matches()) {
+                          errorMessage[0] = "Invalid key id";
+                          return null;
+                        }
+                        try (var connection = dataSource.getConnection();
+                            var statement = connection.prepareStatement(KID_QUERY)) {
+                          statement.setString(1, kid);
+                          try (ResultSet rs = statement.executeQuery()) {
+                            if (rs.next()) {
+                              return TextCodec.BASE64.decode(rs.getString(1));
+                            }
                           }
                         } catch (SQLException e) {
                           errorMessage[0] = e.getMessage();
