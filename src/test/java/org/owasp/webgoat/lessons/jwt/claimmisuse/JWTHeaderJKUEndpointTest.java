@@ -34,7 +34,8 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 class JWTHeaderJKUEndpointTest extends LessonTest {
 
-  private static final WireMockServer trustedJwksServer = new WireMockServer(options().dynamicPort());
+  private static final WireMockServer trustedJwksServer =
+      new WireMockServer(options().dynamicPort());
   private static final WireMockServer attackerServer = new WireMockServer(options().dynamicPort());
 
   private KeyPair keyPair;
@@ -133,7 +134,8 @@ class JWTHeaderJKUEndpointTest extends LessonTest {
   void shouldRejectMissingJku() throws Exception {
     Map<String, Object> claims = new HashMap<>();
     claims.put("username", "Tom");
-    var token = Jwts.builder().setClaims(claims).signWith(RS256, this.keyPair.getPrivate()).compact();
+    var token =
+        Jwts.builder().setClaims(claims).signWith(RS256, this.keyPair.getPrivate()).compact();
 
     mockMvc
         .perform(MockMvcRequestBuilders.post("/JWT/jku/delete").param("token", token).content(""))

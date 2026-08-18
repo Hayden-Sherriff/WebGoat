@@ -116,7 +116,8 @@ public class JWTHeaderJKUEndpoint implements AssignmentEndpoint {
 
   private static URI toNormalizedUri(String url) {
     try {
-      return new URI(url).normalize();
+      var uri = new URI(url).normalize();
+      return uri.isAbsolute() ? uri : null;
     } catch (URISyntaxException e) {
       return null;
     }
