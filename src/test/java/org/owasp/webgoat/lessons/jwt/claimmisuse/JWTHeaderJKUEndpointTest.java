@@ -19,6 +19,7 @@ import java.security.KeyPairGenerator;
 import java.security.interfaces.RSAPublicKey;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jwk.RsaJsonWebKey;
 import org.junit.jupiter.api.AfterAll;
@@ -26,6 +27,8 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.owasp.webgoat.container.plugins.LessonTest;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -117,16 +120,23 @@ class JWTHeaderJKUEndpointTest extends LessonTest {
     attackerServer.verify(0, WireMock.getRequestedFor(WireMock.urlMatching("/files/jwks")));
   }
 
-  @Test
+  @ParameterizedTest
+  @MethodSource("jkusSharingATrustedPrefix")
   @DisplayName("A jku sharing the prefix of a trusted location is rejected")
-  void shouldRejectJkuWithTrustedPrefix() throws Exception {
+  void shouldRejectJkuWithTrustedPrefix(String jku) throws Exception {
     stubJsonWebKeySet(attackerServer);
-    var token = createTokenAndSignIt(trustedJwksUrl() + ".attacker.example.com/jwks");
+    var token = createTokenAndSignIt(jku);
 
     mockMvc
         .perform(MockMvcRequestBuilders.post("/JWT/jku/delete").param("token", token).content(""))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.lessonCompleted", is(false)));
+  }
+
+  private static Stream<String> jkusSharingATrustedPrefix() {
+    return Stream.of(
+        trustedJwksUrl() + ".attacker.example.com/jwks",
+        "http://localhost.attacker.example.com:%d/files/jwks".formatted(trustedJwksServer.port()));
   }
 
   @Test
