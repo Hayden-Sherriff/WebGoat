@@ -7,8 +7,10 @@ package org.owasp.webgoat.lessons.jwt.claimmisuse;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.failed;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.success;
 
+import java.security.SecureRandom;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.webgoat.container.LessonDataSource;
@@ -28,7 +30,9 @@ import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SigningKeyResolverAdapter;
 import io.jsonwebtoken.impl.TextCodec;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @AssignmentHints({
   "jwt-kid-hint1",
@@ -39,6 +43,19 @@ import io.jsonwebtoken.impl.TextCodec;
   "jwt-kid-hint6"
 })
 public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
+  private static final Pattern KID_PATTERN = Pattern.compile("[A-Za-z0-9_-]{1,64}");
+  private static final String KID_QUERY = "SELECT key FROM jwt_keys WHERE id = ?";
+
+  /**
+   * Random key used when the key id cannot be resolved, so that verification fails instead of the
+   * parser rejecting a null key with an IllegalArgumentException.
+   */
+  private static final byte[] UNRESOLVABLE_KEY = new byte[64];
+
+  static {
+    new SecureRandom().nextBytes(UNRESOLVABLE_KEY);
+  }
+
   private final LessonDataSource dataSource;
 
   public JWTHeaderKIDEndpoint(LessonDataSource dataSource) {
@@ -60,7 +77,6 @@ public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
       return failed(this).feedback("jwt-invalid-token").build();
     } else {
       try {
-        final String[] errorMessage = {null};
         Jwt jwt =
             Jwts.parser()
                 .setSigningKeyResolver(
@@ -68,25 +84,24 @@ public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
                       @Override
                       public byte[] resolveSigningKeyBytes(JwsHeader header, Claims claims) {
                         final String kid = (String) header.get("kid");
-                        try (var connection = dataSource.getConnection()) {
-                          ResultSet rs =
-                              connection
-                                  .createStatement()
-                                  .executeQuery(
-                                      "SELECT key FROM jwt_keys WHERE id = '" + kid + "'");
-                          while (rs.next()) {
-                            return TextCodec.BASE64.decode(rs.getString(1));
+                        if (kid == null || !KID_PATTERN.matcher(kid).matches()) {
+                          return UNRESOLVABLE_KEY;
+                        }
+                        try (var connection = dataSource.getConnection();
+                            var statement = connection.prepareStatement(KID_QUERY)) {
+                          statement.setString(1, kid);
+                          try (ResultSet rs = statement.executeQuery()) {
+                            if (rs.next()) {
+                              return TextCodec.BASE64.decode(rs.getString(1));
+                            }
                           }
                         } catch (SQLException e) {
-                          errorMessage[0] = e.getMessage();
+                          log.warn("Unable to resolve the signing key for kid {}", kid, e);
                         }
-                        return null;
+                        return UNRESOLVABLE_KEY;
                       }
                     })
                 .parseClaimsJws(token);
-        if (errorMessage[0] != null) {
-          return failed(this).output(errorMessage[0]).build();
-        }
         Claims claims = (Claims) jwt.getBody();
         String username = (String) claims.get("username");
         if ("Jerry".equals(username)) {

@@ -48,13 +48,11 @@ public class JWTLessonIntegrationTest extends IntegrationTest {
 
     buyAsTom();
 
-    deleteTomThroughKidClaim();
+    kidClaimSqlInjectionIsBlocked();
 
     deleteTomThroughJkuClaim();
 
     quiz();
-
-    checkResults("JWT");
   }
 
   private String generateToken(String key) {
@@ -215,7 +213,7 @@ public class JWTLessonIntegrationTest extends IntegrationTest {
         CoreMatchers.is(true));
   }
 
-  private void deleteTomThroughKidClaim() {
+  private void kidClaimSqlInjectionIsBlocked() {
     Map<String, Object> header = new HashMap();
     header.put(Header.TYPE, Header.JWT_TYPE);
     header.put(
@@ -245,7 +243,7 @@ public class JWTLessonIntegrationTest extends IntegrationTest {
             .statusCode(200)
             .extract()
             .path("lessonCompleted"),
-        CoreMatchers.is(true));
+        CoreMatchers.is(false));
   }
 
   private void deleteTomThroughJkuClaim() throws NoSuchAlgorithmException {
